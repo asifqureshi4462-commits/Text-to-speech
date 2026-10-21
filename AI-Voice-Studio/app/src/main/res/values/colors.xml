@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#060B2B</color>
+    <color name="splash_bg">#060B2B</color>
+    <color name="brand_cyan">#22D3EE</color>
+    <color name="brand_violet">#8B5CF6</color>
+    <color name="white">#FFFFFF</color>
+
+    <!-- Light theme -->
+    <color name="app_primary">#0891B2</color>
+    <color name="app_on_primary">#FFFFFF</color>
+    <color name="app_secondary">#7C3AED</color>
+    <color name="app_bg">#F4F7FC</color>
+    <color name="app_surface">#FFFFFF</color>
+    <color name="app_surface_variant">#E7ECF6</color>
+    <color name="app_text">#0B0D12</color>
+    <color name="app_text_secondary">#4A5468</color>
+    <color name="app_outline">#C5CCDA</color>
+    <color name="app_error">#C62828</color>
+    <color name="app_success">#15803D</color>
+</resources>

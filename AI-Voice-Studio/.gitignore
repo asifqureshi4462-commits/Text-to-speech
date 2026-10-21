@@ -1,0 +1,18 @@
+# Secrets & local state
+.env
+*.jks
+*.keystore
+keystore.properties
+local.properties
+backend/data/
+backend/node_modules/
+# Android / Gradle
+.gradle/
+build/
+*.apk
+*.aab
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
