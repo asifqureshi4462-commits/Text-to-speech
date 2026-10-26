@@ -40,8 +40,14 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK (accepts licences)
+      - name: Set up Android SDK and required packages
         uses: android-actions/setup-android@v3
+        with:
+          packages: >-
+            platform-tools
+            platforms;android-35
+            build-tools;35.0.0
+            cmdline-tools;latest
 
       - name: Validate Gradle wrapper (only when a wrapper JAR is committed)
         if: ${{ hashFiles('gradle/wrapper/gradle-wrapper.jar') != '' }}
@@ -56,7 +62,6 @@ jobs:
         run: python3 tools/check_project.py
 
       - name: Unit tests and debug build
-        # BACKEND_URL is an optional, NON-secret repository variable (Settings > Secrets and variables > Actions > Variables).
         run: |
           if [ -f gradle/wrapper/gradle-wrapper.jar ] && [ -f gradlew ]; then GRADLE=./gradlew; else GRADLE=gradle; fi
           $GRADLE --no-daemon --stacktrace testDebugUnitTest assembleDebug -PbackendUrl="${{ vars.BACKEND_URL }}"
