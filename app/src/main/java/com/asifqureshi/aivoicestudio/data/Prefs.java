@@ -31,6 +31,10 @@ public final class Prefs {
     public String getNormalizedServerUrl() { return Validators.normalizeServerUrl(getServerUrl()); }
     public void setServerUrl(String v) { sp.edit().putString("server_url", v == null ? "" : v).apply(); }
 
+    /** Voice provider chosen in Settings ("elevenlabs", "openai", "google"), or null = use the server's default. */
+    public String getProvider() { String p = sp.getString("provider", ""); return p.isEmpty() ? null : p; }
+    public void setProvider(String v) { sp.edit().putString("provider", v == null ? "" : v).apply(); }
+
     public String getDefaultVoiceId() { return sp.getString("default_voice_id", null); }
     public String getDefaultVoiceName() { return sp.getString("default_voice_name", null); }
     public void setDefaultVoice(String id, String name) {

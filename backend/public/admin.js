@@ -23,7 +23,7 @@
       $('statUsers').textContent = stats.users;
       $('statChars').textContent = stats.charactersThisMonth.toLocaleString();
       $('statGens').textContent = Object.entries(stats.generations).map(([k, v]) => k + ': ' + v).join(' · ') || 'none yet';
-      $('statProvider').textContent = !provider.configured ? 'Not configured' : provider.healthy ? 'Healthy' : 'Unhealthy' + (provider.httpStatus ? ' (HTTP ' + provider.httpStatus + ')' : '');
+      $('statProvider').textContent = (provider.providers || []).map((p) => p.label + (p.isDefault ? ' (default)' : '') + ': ' + (!p.configured ? 'not configured' : p.healthy ? 'healthy' : 'unhealthy' + (p.httpStatus ? ' HTTP ' + p.httpStatus : ''))).join(' · ');
       fill('errors', stats.errorsByCode.map((e) => [e.code || '(unknown)', e.c]));
       const plans = Object.keys(stats.limits);
       fill('users', users.users.map((u) => {

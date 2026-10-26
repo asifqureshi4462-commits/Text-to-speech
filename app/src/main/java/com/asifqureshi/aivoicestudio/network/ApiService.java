@@ -32,8 +32,10 @@ public interface ApiService {
     @GET("v1/voices")
     Call<Envelope<VoicesData>> voices(@Query("search") String search, @Query("pageSize") int pageSize,
                                       @Query("pageToken") String pageToken, @Query("category") String category,
-                                      @Query("sort") String sort, @Query("sort_direction") String sortDirection);
-    @GET("v1/models") Call<Envelope<ModelsData>> models();
+                                      @Query("sort") String sort, @Query("sort_direction") String sortDirection,
+                                      @Query("provider") String provider);
+    @GET("v1/models") Call<Envelope<ModelsData>> models(@Query("provider") String provider);
+    @GET("v1/providers") Call<Envelope<ProvidersData>> providers();
 
     @Streaming @POST("v1/tts") Call<ResponseBody> tts(@Body TtsRequest body);
     @GET("v1/usage") Call<Envelope<Usage>> usage();
@@ -55,7 +57,7 @@ public interface ApiService {
     @POST("v1/projects/{id}/duplicate") Call<Envelope<ProjectData>> duplicateProject(@Path("id") String id);
     @DELETE("v1/projects/{id}") Call<Envelope<Object>> deleteProject(@Path("id") String id);
 
-    @GET("v1/favorites/voices") Call<Envelope<FavoritesData>> favoriteVoices();
-    @PUT("v1/favorites/voices/{id}") Call<Envelope<Object>> addFavoriteVoice(@Path("id") String id, @Body NameRequest body);
+    @GET("v1/favorites/voices") Call<Envelope<FavoritesData>> favoriteVoices(@Query("provider") String provider);
+    @PUT("v1/favorites/voices/{id}") Call<Envelope<Object>> addFavoriteVoice(@Path("id") String id, @Body FavoriteRequest body);
     @DELETE("v1/favorites/voices/{id}") Call<Envelope<Object>> removeFavoriteVoice(@Path("id") String id);
 }

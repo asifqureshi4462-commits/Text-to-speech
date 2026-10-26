@@ -102,6 +102,12 @@ public class VoicesFragment extends Fragment implements VoiceAdapter.Actions {
                 }).show());
         btnRetry.setOnClickListener(x -> { started = true; vm.reload(); });
 
+        shared.models.observe(getViewLifecycleOwner(), res -> {
+            if (res == null || !res.isSuccess() || res.data.provider == null) return;
+            boolean eleven = "elevenlabs".equals(res.data.provider);
+            v.findViewById(R.id.scrollCategories).setVisibility(eleven ? View.VISIBLE : View.GONE);
+            chipSort.setVisibility(eleven ? View.VISIBLE : View.GONE);
+        });
         vm.state.observe(getViewLifecycleOwner(), this::render);
         shared.favoriteIds.observe(getViewLifecycleOwner(), f -> refreshAdapterState());
         shared.selectedVoice.observe(getViewLifecycleOwner(), s -> refreshAdapterState());

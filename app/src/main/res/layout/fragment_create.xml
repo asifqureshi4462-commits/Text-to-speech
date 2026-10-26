@@ -213,6 +213,7 @@
                     android:visibility="gone">
 
             <LinearLayout
+                android:id="@+id/groupStability"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
@@ -254,6 +255,7 @@
                     android:text="@string/stability_help" />
             </LinearLayout>
             <LinearLayout
+                android:id="@+id/groupSimilarity"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
@@ -337,6 +339,7 @@
                     android:text="@string/style_help" />
             </LinearLayout>
             <LinearLayout
+                android:id="@+id/groupSpeed"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">

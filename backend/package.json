@@ -4,10 +4,13 @@
   "private": true,
   "description": "Secure backend for AI Voice Studio (auth, ElevenLabs proxy, projects, history, usage)",
   "license": "UNLICENSED",
-  "engines": { "node": ">=22.13" },
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
     "start": "node --disable-warning=ExperimentalWarning src/server.js",
     "test": "node --disable-warning=ExperimentalWarning --test test/*.test.js",
-    "make-admin": "node --disable-warning=ExperimentalWarning scripts/make-admin.js"
+    "make-admin": "node --disable-warning=ExperimentalWarning scripts/make-admin.js",
+    "check-providers": "node --disable-warning=ExperimentalWarning scripts/check-providers.js"
   }
 }

@@ -2,7 +2,7 @@
 const { ApiError, bad } = require('../http');
 const V = require('../validate');
 const S = require('../security');
-const P = require('../provider');
+const Providers = require('../providers');
 const { periodStart } = require('./speech');
 
 module.exports = function adminRoutes(r, { db, config }) {
@@ -44,10 +44,16 @@ module.exports = function adminRoutes(r, { db, config }) {
     data: { entries: db.prepare('SELECT * FROM audit_log ORDER BY created_at DESC LIMIT ?').all(V.intParam(query.get('limit'), 100, 1, 500)) },
   }));
   r.add('GET', '/v1/admin/provider', { auth: 'admin' }, async ({ signal }) => {
-    if (!config.elevenKey) return { data: { configured: false, healthy: false, message: 'ELEVENLABS_API_KEY is not set.' } };
-    try {
-      const res = await P.providerFetch(config, '/v1/models', {}, signal);
-      return { data: { configured: true, healthy: res.ok, httpStatus: res.status } };
-    } catch (e) { return { data: { configured: true, healthy: false, error: e.code || 'unreachable' } }; }
+    const def = Providers.defaultProviderId(config);
+    const providers = [];
+    for (const p of Providers.ALL) {
+      const row = { id: p.id, label: p.label, envVar: p.envVar, configured: p.isConfigured(config), isDefault: p.id === def, healthy: false };
+      if (row.configured) {
+        try { Object.assign(row, await p.health(config, signal)); } catch (e) { row.error = e.code || 'unreachable'; }
+      }
+      providers.push(row);
+    }
+    const d = providers.find((p) => p.isDefault);
+    return { data: { configured: d.configured, healthy: d.healthy, httpStatus: d.httpStatus, error: d.error, defaultProvider: def, providers } };
   });
 };

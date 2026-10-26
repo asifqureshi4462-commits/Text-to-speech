@@ -69,7 +69,8 @@ public class CreateFragment extends Fragment {
     private MaterialSwitch switchOverride, switchBoost;
     private Slider sliderStability, sliderSimilarity, sliderStyle, sliderSpeed;
     private TextView valueStability, valueSimilarity, valueStyle, valueSpeed;
-    private View groupVoiceSettings, groupStyle, groupBoost, cardError, cardResult;
+    private View groupVoiceSettings, groupStability, groupSimilarity, groupSpeed, groupStyle, groupBoost, cardError, cardResult;
+    private Capabilities caps = defaultCaps();
     private MaterialButton btnGenerate, btnCancel;
     private LinearProgressIndicator progress;
     private AudioPlayerView player;
@@ -132,6 +133,7 @@ public class CreateFragment extends Fragment {
         valueStability = v.findViewById(R.id.valueStability); valueSimilarity = v.findViewById(R.id.valueSimilarity);
         valueStyle = v.findViewById(R.id.valueStyle); valueSpeed = v.findViewById(R.id.valueSpeed);
         groupVoiceSettings = v.findViewById(R.id.groupVoiceSettings); groupStyle = v.findViewById(R.id.groupStyle);
+        groupStability = v.findViewById(R.id.groupStability); groupSimilarity = v.findViewById(R.id.groupSimilarity); groupSpeed = v.findViewById(R.id.groupSpeed);
         groupBoost = v.findViewById(R.id.groupBoost); cardError = v.findViewById(R.id.cardError); cardResult = v.findViewById(R.id.cardResult);
         btnGenerate = v.findViewById(R.id.btnGenerate); btnCancel = v.findViewById(R.id.btnCancel);
         progress = v.findViewById(R.id.progress); player = v.findViewById(R.id.playerView);
@@ -202,6 +204,28 @@ public class CreateFragment extends Fragment {
         if (shared.models.getValue() == null) shared.loadModels(false);
     }
 
+    /** Capabilities assumed until the server tells us what the selected provider supports (ElevenLabs-like). */
+    private static Capabilities defaultCaps() {
+        Capabilities c = new Capabilities();
+        c.stability = true; c.similarity = true; c.style = true; c.speakerBoost = true; c.speed = true;
+        c.speedMin = 0.7f; c.speedMax = 1.2f;
+        return c;
+    }
+
+    /** Shows only the controls the selected provider really supports and adapts the speed range. */
+    private void applyCapabilities() {
+        groupStability.setVisibility(caps.stability ? View.VISIBLE : View.GONE);
+        groupSimilarity.setVisibility(caps.similarity ? View.VISIBLE : View.GONE);
+        groupSpeed.setVisibility(caps.speed ? View.VISIBLE : View.GONE);
+        if (!caps.style) groupStyle.setVisibility(View.GONE);
+        if (!caps.speakerBoost) groupBoost.setVisibility(View.GONE);
+        float from = caps.speedMin > 0 ? caps.speedMin : 0.7f, to = caps.speedMax > from ? caps.speedMax : 1.2f;
+        sliderSpeed.setValue(1.0f); // 1.0 is valid in every provider's range, so the bounds can change safely
+        sliderSpeed.setValueFrom(from);
+        sliderSpeed.setValueTo(to);
+        sliderSpeed.setValue(1.0f);
+    }
+
     private static String shortId(String id) { return id == null ? "audio" : id.substring(0, Math.min(8, id.length())); }
 
     private void bindSlider(Slider s, TextView value) {
@@ -229,6 +253,8 @@ public class CreateFragment extends Fragment {
         models = res.data.models == null ? new ArrayList<>() : res.data.models;
         formats = res.data.outputFormats == null ? new ArrayList<>() : res.data.outputFormats;
         if (res.data.maxTextChars > 0) serverMaxChars = res.data.maxTextChars;
+        caps = res.data.capabilities != null ? res.data.capabilities : defaultCaps();
+        applyCapabilities();
 
         List<String> names = new ArrayList<>();
         for (TtsModel m : models) names.add(m.name != null ? m.name : m.modelId);
@@ -255,8 +281,8 @@ public class CreateFragment extends Fragment {
     private void selectModel(TtsModel m) {
         selectedModel = m;
         dropModel.setText(m.name != null ? m.name : m.modelId, false);
-        groupStyle.setVisibility(m.canUseStyle ? View.VISIBLE : View.GONE);   // hide controls the model does not support
-        groupBoost.setVisibility(m.canUseSpeakerBoost ? View.VISIBLE : View.GONE);
+        groupStyle.setVisibility(caps.style && m.canUseStyle ? View.VISIBLE : View.GONE);   // hide controls the provider/model does not support
+        groupBoost.setVisibility(caps.speakerBoost && m.canUseSpeakerBoost ? View.VISIBLE : View.GONE);
         final List<ModelLanguage> langs = m.languages == null ? new ArrayList<>() : m.languages;
         List<String> labels = new ArrayList<>();
         labels.add(getString(R.string.language_auto));
@@ -340,13 +366,14 @@ public class CreateFragment extends Fragment {
         r.modelId = selectedModel != null ? selectedModel.modelId : DEFAULT_MODEL;
         r.outputFormat = selectedFormat != null ? selectedFormat : app.prefs.getDefaultFormat();
         r.languageCode = selectedLanguageId;
+        r.provider = app.prefs.getProvider(); // null = server default
         if (switchOverride.isChecked()) {
             VoiceSettings vs = new VoiceSettings();
-            vs.stability = sliderStability.getValue();
-            vs.similarityBoost = sliderSimilarity.getValue();
-            if (selectedModel == null || selectedModel.canUseStyle) vs.style = sliderStyle.getValue();
-            if (sliderSpeed.getValue() != 1.0f) vs.speed = sliderSpeed.getValue();
-            if (selectedModel == null || selectedModel.canUseSpeakerBoost) vs.useSpeakerBoost = switchBoost.isChecked();
+            if (caps.stability) vs.stability = sliderStability.getValue();
+            if (caps.similarity) vs.similarityBoost = sliderSimilarity.getValue();
+            if (caps.style && (selectedModel == null || selectedModel.canUseStyle)) vs.style = sliderStyle.getValue();
+            if (caps.speed && sliderSpeed.getValue() != 1.0f) vs.speed = sliderSpeed.getValue();
+            if (caps.speakerBoost && (selectedModel == null || selectedModel.canUseSpeakerBoost)) vs.useSpeakerBoost = switchBoost.isChecked();
             r.voiceSettings = vs;
         }
         return r;

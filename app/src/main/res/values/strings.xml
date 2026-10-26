@@ -130,7 +130,7 @@
     <string name="style_exaggeration">Style</string>
     <string name="style_help">Amplifies the speaking style of the voice. Higher values may reduce stability.</string>
     <string name="speed">Speed</string>
-    <string name="speed_help">Speaking speed (0.70 to 1.20).</string>
+    <string name="speed_help">Speaking speed. 1.00 is normal.</string>
     <string name="speaker_boost">Speaker boost</string>
     <string name="speaker_boost_help">Improves similarity to the voice at the cost of slightly slower generation.</string>
     <string name="generate_speech">Generate speech</string>
@@ -235,4 +235,10 @@
     <string name="terms_body">TERMS OF SERVICE (template)\n\nThis template ships with the open project and must be reviewed by a qualified lawyer before public release.\n\n1. Use of the service. AI Voice Studio converts text you provide into synthetic speech using a third-party voice provider. You are responsible for the text you submit and for how you use the generated audio.\n\n2. Acceptable use. Do not use the service to deceive, defraud, harass or impersonate real people, to infringe copyright, or to generate unlawful content. Synthetic audio should be disclosed as AI-generated where the law or platform rules require it.\n\n3. Voice rights. Only use voices you are licensed to use. Voice cloning is not available in this version.\n\n4. Limits. Usage limits apply and may change. The service is provided as is, without warranty.\n\n5. Accounts. Keep your password confidential. You can delete your account at any time from Profile.</string>
     <string name="privacy_body">PRIVACY POLICY (template)\n\nThis template ships with the open project and must be adapted and reviewed before public release.\n\nWhat we process: your name and email address, your scripts and generation settings, the audio generated for you, usage counts and your favourite voices.\n\nWho receives it: text you submit for speech generation is sent through the server to the voice provider (ElevenLabs) to produce audio. Your account data is stored on the server operated by the app publisher.\n\nWhere audio is stored: generated audio is kept in private server storage that only your account can access, and temporarily in this app\'s private cache on your device.\n\nSecurity: sign-in tokens are encrypted with the Android Keystore. Provider API keys are never stored in the app.\n\nYour choices: you can delete individual history items and projects, clear the local cache, and delete your account (which removes your data from the server) from the Profile tab. Logs avoid recording your text or credentials.</string>
     <string name="licenses_body">This app uses the following open-source software, all licensed under the Apache License 2.0:\n\n- AndroidX libraries (AppCompat, Core, Fragment, Activity, Lifecycle, RecyclerView, ViewPager2, SwipeRefreshLayout, ConstraintLayout, Core SplashScreen)\n- Material Components for Android\n- AndroidX Media3 (ExoPlayer)\n- Retrofit and OkHttp (Square)\n- Gson (Google)\n\nFull licence text: https://www.apache.org/licenses/LICENSE-2.0</string>
+    <string name="setting_provider">Voice provider</string>
+    <string name="server_default">Server default</string>
+    <string name="server_default_with">Server default (%1$s)</string>
+    <string name="provider_changed">Provider changed. Voices and models reload when you go back.</string>
+    <string name="no_provider_configured">No voice provider is configured on the server yet. The administrator must add an API key to backend/.env.</string>
+    <string name="tagline">Turn text into real voices</string>
 </resources>

@@ -141,8 +141,8 @@ module.exports = function authRoutes(r, { db, config }) {
     const ok = verifyNow(query.get('token'));
     const msg = ok ? 'Your email is verified. You can return to the AI Voice Studio app and sign in.'
       : 'This verification link is invalid or has expired. Request a new one from the app.';
-    return { raw: { status: ok ? 200 : 400, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'" },
-      body: Buffer.from(`<!doctype html><meta name=viewport content="width=device-width,initial-scale=1"><title>AI Voice Studio</title><body style="font-family:sans-serif;background:#0b0d12;color:#eaf2ff;display:grid;place-items:center;min-height:100vh;margin:0"><p style="max-width:28em;padding:24px;font-size:18px">${msg}</p>`) } };
+    return { raw: { status: ok ? 200 : 400, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'" },
+      body: Buffer.from(`<!doctype html><meta name=viewport content="width=device-width,initial-scale=1"><title>AI Voice Studio</title><link rel=icon href=/assets/favicon.png><body style="font-family:sans-serif;background:#0b0d12;color:#eaf2ff;display:grid;place-items:center;min-height:100vh;margin:0;text-align:center"><div style="max-width:28em;padding:24px"><img src=/assets/logo.png alt=\"AI Voice Studio\" width=96 height=96 style=\"border-radius:20px\"><p style=\"font-size:18px\">${msg}</p></div>`) } };
   });
   r.add('POST', '/v1/auth/resend-verification', { limit: 'auth' }, async ({ body }) => {
     const email = V.email(body.email);

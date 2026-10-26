@@ -11,6 +11,8 @@ module.exports = function staticRoutes(r) {
     '/admin': ['admin.html', 'text/html; charset=utf-8'],
     '/admin/app.js': ['admin.js', 'text/javascript; charset=utf-8'],
     '/admin/style.css': ['admin.css', 'text/css; charset=utf-8'],
+    '/assets/logo.png': ['logo.png', 'image/png'],
+    '/assets/favicon.png': ['favicon.png', 'image/png'],
   };
   for (const [route, [file, type]] of Object.entries(files)) {
     r.add('GET', route, {}, async () => ({

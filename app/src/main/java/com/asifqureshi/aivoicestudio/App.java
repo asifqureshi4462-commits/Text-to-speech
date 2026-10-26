@@ -33,7 +33,7 @@ public class App extends Application {
         apiClient = new ApiClient(prefs, tokens);
         authRepository = new AuthRepository(apiClient, tokens);
         speechRepository = new SpeechRepository(apiClient);
-        voiceRepository = new VoiceRepository(apiClient);
+        voiceRepository = new VoiceRepository(apiClient, prefs);
         applyTheme(prefs.getThemeMode());
     }
 

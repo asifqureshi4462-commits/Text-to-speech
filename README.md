@@ -1,12 +1,30 @@
 # AI Voice Studio
 
-Native Android (Java + XML) text-to-speech app with a secure backend that talks to the real **ElevenLabs** API.
-Developer: **Asif Qureshi** · Package: `com.asifqureshi.aivoicestudio` · Logo: supplied by the owner (`app/src/main/res/drawable-nodpi/brand_logo.png`, `ic_launcher_foreground.png`).
+Native Android (Java + XML) text-to-speech app with a secure backend that talks to real AI voice providers: **ElevenLabs, OpenAI and Google Cloud Text-to-Speech** (you choose which ones to enable).
+Developer: **Asif Qureshi** · Package: `com.asifqureshi.aivoicestudio` · Logo: supplied by the owner and used on the splash screen, app icon (incl. Android 13 themed icon), sign-in/sign-up/verification screens, onboarding, Home, Settings and the admin web page - see **docs/LOGO_GUIDE.md**.
 
 > **Honest status.** The backend is implemented and its automated tests pass. The Android app is fully written but
 > **has not been compiled yet** (the authoring environment had no Android SDK / Gradle / internet). The first
 > GitHub Actions run is the build verification. Real speech generation has **not** been exercised against live
-> ElevenLabs servers (no API key was available); the integration is covered by tests against a local stand-in server.
+> ElevenLabs, OpenAI or Google servers (no API keys were available); all three integrations are covered by tests against local stand-in servers.
+
+
+## Beginner path (read these in order)
+
+| Step | What to do | Details |
+|---|---|---|
+| 1 | Get an API key from the provider you want (ElevenLabs, OpenAI or Google Cloud) | [docs/API_PROVIDERS.md](docs/API_PROVIDERS.md) - Step 1 |
+| 2 | Copy `.env.example` to **`backend/.env`** and paste your key after the matching variable name: `ELEVENLABS_API_KEY=`, `OPENAI_API_KEY=` or `GOOGLE_TTS_API_KEY=` (never in Java/XML files, never in chat) | Step 2 |
+| 3 | Check it: `cd backend && npm run check-providers`, then start it: `npm start` | Step 5 |
+| 4 | Put the backend online over HTTPS, then enter its address in the app: **Login > Server settings** (or `backendUrl=` in `gradle.properties`, or the `BACKEND_URL` GitHub variable) | Step 4 |
+| 5 | Push to GitHub, download the APK from **Actions > Android CI > Artifacts** | [GitHub Actions APK](#3-github-actions-apk) |
+| 6 | Something wrong? | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) |
+| 7 | Replace the logo later? | [docs/LOGO_GUIDE.md](docs/LOGO_GUIDE.md) |
+
+### Supported voice providers (only these have real code)
+**ElevenLabs** (`ELEVENLABS_API_KEY`), **OpenAI** (`OPENAI_API_KEY`), **Google Cloud Text-to-Speech** with an API key (`GOOGLE_TTS_API_KEY`).
+Select the server default with `TTS_PROVIDER=` in `backend/.env`; each user can pick another in **Profile > Settings > Voice provider**.
+Azure, Amazon Polly, PlayHT and others are **not** implemented.
 
 ## What is implemented
 
@@ -16,8 +34,8 @@ Developer: **Asif Qureshi** · Package: `com.asifqureshi.aivoicestudio` · Logo:
 | Sign up, login, forgot/reset password, email verification, session refresh + expiry, logout, delete account | Implemented (email delivery needs a mail webhook, see below) |
 | Bottom navigation: Home, Create, Voices, Library, Profile (state preserved per tab) | Implemented |
 | Home: greeting, usage (real data), quick actions, favourites, recent audio, empty states | Implemented |
-| Text to speech: editor, paste/select/clear, .txt import, drafts, counter + limits, model/language/format pickers, optional voice-setting overrides (stability, similarity, style, speed, speaker boost - only shown when the model supports them), cancel, retry, quota/error messages | Implemented |
-| Voice library: search, category filter, sort, paging, preview, favourites, "use voice" | Implemented |
+| Text to speech with **ElevenLabs, OpenAI or Google Cloud**: editor, paste/select/clear, .txt import, drafts, counter + limits, model/language/format pickers, optional voice-setting overrides (only the controls the chosen provider/model supports are shown), cancel, retry, quota/error messages | Implemented (live provider calls unverified) |
+| Voice library: search, paging, favourites, "use voice"; category filter, sort and previews where the provider offers them (ElevenLabs) | Implemented |
 | Audio player (Media3): play/pause, ±10 s, seek bar, speed, audio focus, headphone-unplug pause | Implemented (foreground playback only) |
 | Download via Storage Access Framework, share sheet, file size/duration | Implemented |
 | History (search, replay, download, share, regenerate, delete), projects (save, open, rename, duplicate, favourite, delete) | Implemented |
@@ -39,24 +57,25 @@ type `longform`, `dialogue` and `studio`.
   Tokens are encrypted with an AES-GCM key in the Android Keystore. HTTPS only (HTTP allowed solely for `localhost`, `10.0.2.2`, `127.0.0.1`).
 * Backend: Node.js ≥ 22.13, **zero npm dependencies** (built-in `node:sqlite`, `crypto`, `http`, `fetch`). One coherent auth system:
   email + password (scrypt) → short-lived JWT access token + rotating refresh token with reuse detection.
-* The ElevenLabs API key lives only in the backend environment. The app never sees it.
+* Provider API keys live only in the backend environment (`backend/.env` or platform variables). The app never sees them. Providers are plug-in adapters in `backend/src/providers/`.
 
 ## Quick start
 
 ### 1. Backend
 ```bash
+cp .env.example backend/.env     # then open backend/.env and set JWT_SECRET plus at least one provider key
 cd backend
-cp ../.env.example .env          # edit it; set JWT_SECRET and ELEVENLABS_API_KEY
-export $(grep -v '^#' .env | xargs)
 npm test                         # optional: run the test-suite
+npm run check-providers          # shows which providers are configured and whether the key is accepted (keys are never printed)
 npm start
 ```
-Put it behind HTTPS (reverse proxy such as Caddy/nginx, or a platform with TLS). A `backend/Dockerfile` is included
-(`docker build -t avs-backend backend && docker run -p 8080:8080 -v avs-data:/data --env-file .env avs-backend`).
+`backend/.env` is read automatically (real environment variables override it) and is git-ignored.
+Put the backend behind HTTPS (reverse proxy such as Caddy/nginx, or a platform with TLS). A `backend/Dockerfile` is included
+(`docker build -t avs-backend backend && docker run -p 8080:8080 -v avs-data:/data --env-file backend/.env avs-backend`).
 Check `GET /healthz`. Database migrations in `backend/migrations` are applied automatically at start-up.
 
 Create an administrator: sign up in the app, then on the server run `npm run make-admin -- you@example.com`
-and open `https://your-backend/admin`.
+and open `https://your-backend/admin` (shows provider health, users, usage, errors, audit log).
 
 Email: the backend POSTs `{to, subject, text}` JSON to `MAIL_WEBHOOK_URL` (your own function in front of any mail provider).
 Without it, verification/reset emails are **not sent** and the app tells the user so. Keep `REQUIRE_EMAIL_VERIFICATION=false` until it is set up.
@@ -78,28 +97,32 @@ The workflow installs Gradle 8.9 itself, so a missing wrapper JAR does not break
 Release signing is not configured; if you add it, store keystore and passwords only in GitHub *Secrets*.
 
 ## Configuration reference (backend environment)
-See `.env.example`. Key variables: `JWT_SECRET` (required, ≥ 32 chars), `ELEVENLABS_API_KEY`, `PORT`, `DB_PATH`, `AUDIO_DIR`,
+See `.env.example`. Key variables: `JWT_SECRET` (required, ≥ 32 chars), `ELEVENLABS_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_TTS_API_KEY`, `TTS_PROVIDER`, `PORT`, `DB_PATH`, `AUDIO_DIR`,
 `MAX_TEXT_CHARS`, `FREE_MONTHLY_CHARS`, `PLAN_LIMITS_JSON`, `MAIL_WEBHOOK_URL`, `MAIL_WEBHOOK_SECRET`, `REQUIRE_EMAIL_VERIFICATION`,
 `PUBLIC_BASE_URL`, `TRUST_PROXY`, rate-limit settings. Default limits are placeholders, not pricing: set what fits your business.
 Application usage limits are separate from your ElevenLabs account billing.
 
 ## Project structure
 ```
-app/                     Android module (Java, XML, resources, unit tests)
-backend/                 Node.js API, migrations, admin dashboard (public/), tests, Dockerfile
-.github/workflows/       android.yml
-tools/check_project.py   Offline checker for resource references, imports, manifest and Java syntax
-.env.example             Backend variable names with placeholder values
+app/                         Android module (Java, XML, resources, unit tests)
+backend/                     Node.js API, migrations, admin dashboard (public/), tests, Dockerfile
+backend/src/providers/       ElevenLabs, OpenAI and Google Cloud TTS adapters
+backend/.env                 YOUR private config (you create it from .env.example; git-ignored)
+.github/workflows/android.yml  CI: backend tests + APK build
+docs/                        LOGO_GUIDE.md, API_PROVIDERS.md, TROUBLESHOOTING.md, play_store_icon_512.png
+tools/check_project.py       Offline checker for resource references, imports, manifest and Java syntax
+tools/make_logo_assets.py    Regenerates every logo/icon file from one image of your logo
+.env.example                 Backend variable names with placeholder values
 ```
 
 ## Testing
-* `cd backend && npm test` - 14 integration tests (auth, token rotation, validation, quotas, provider-error mapping, authorization, deletion, admin).
+* `cd backend && npm test` - 23 integration tests (auth, token rotation, validation, quotas, ElevenLabs/OpenAI/Google request construction and error mapping, per-provider favourites, authorization, deletion, admin, static pages).
 * `python3 tools/check_project.py` - consistency checks for the Android sources (not a substitute for compiling).
 * `./gradlew testDebugUnitTest` - JVM unit tests (validators, formatting, API-error parsing).
 
 ## Troubleshooting
 * *"No server address is set"* - set it under Login → Server settings.
-* *"provider_not_configured"* - set `ELEVENLABS_API_KEY` on the backend and restart.
+* *"provider_not_configured"* - set the provider's key in `backend/.env` and restart (full list of problems and fixes: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)).
 * *Verification/reset email never arrives* - configure `MAIL_WEBHOOK_URL` (see above).
 * *HTTP 402 usage_limit_exceeded* - monthly app limit reached; raise `FREE_MONTHLY_CHARS` or assign a plan in `/admin`.
 * *Emulator cannot reach local backend* - use `http://10.0.2.2:8080/`.
@@ -111,6 +134,7 @@ scoped to the authenticated user; audio is stored privately and served only to i
 account deletion removes database rows and stored audio. The Terms and Privacy Policy shown in the app are **templates** that need legal review.
 The backend stores each submitted script with its history entry (so it can be regenerated); users can delete entries or their whole account.
 Voice-clone and impersonation features are intentionally absent.
+The backend never returns provider keys; `GET /healthz` only says whether any provider is configured.
 
 ## Known limitations
 SQLite single-node storage; in-memory rate limiter (per process); usage accounting is approximate under heavy concurrent requests

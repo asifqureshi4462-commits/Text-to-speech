@@ -1,5 +1,7 @@
 'use strict';
 // Usage: node scripts/make-admin.js user@example.com   (run on the server; needs the same env as the backend)
+const path = require('node:path');
+require('../src/dotenv').loadEnvFile(process.env.ENV_FILE || path.join(__dirname, '..', '.env'));
 const { load } = require('../src/config');
 const { openDatabase } = require('../src/db');
 const email = (process.argv[2] || '').trim().toLowerCase();

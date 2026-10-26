@@ -36,3 +36,19 @@ test('admin dashboard is served with a strict CSP and contains no secrets', asyn
   }
   await app.close();
 });
+
+test('logo assets and the verify-email page are served (no scripts, images from self only)', async () => {
+  const app = createApp(load({ JWT_SECRET: 'x'.repeat(32), DB_PATH: ':memory:', AUDIO_DIR: require('node:os').tmpdir() + '/avs-logo' }));
+  await new Promise((r) => app.server.listen(0, r));
+  const base = `http://127.0.0.1:${app.server.address().port}`;
+  for (const p of ['/assets/logo.png', '/assets/favicon.png']) {
+    const res = await fetch(base + p);
+    assert.equal(res.status, 200); assert.equal(res.headers.get('content-type'), 'image/png');
+    assert.equal((await res.arrayBuffer()).byteLength > 500, true);
+  }
+  const v = await fetch(base + '/verify-email?token=bogus');
+  assert.equal(v.status, 400); assert.match(await v.text(), /assets\/logo\.png/);
+  assert.match(v.headers.get('content-security-policy'), /img-src 'self'/);
+  assert.equal((await (await fetch(base + '/healthz')).json()).data.providerConfigured, false);
+  await app.close();
+});

@@ -6,7 +6,8 @@ const V = require('../validate');
 const S = require('../security');
 
 const TYPES = ['tts', 'longform', 'dialogue', 'studio'];
-const ID_RE = /^[A-Za-z0-9_-]{6,64}$/;
+const ID_RE = /^[A-Za-z0-9_-]{2,64}$/;
+const Providers = require('../providers');
 const like = (s) => `%${s.replace(/[\\%_]/g, (c) => '\\' + c)}%`;
 
 module.exports = function contentRoutes(r, { db, config }) {
@@ -109,14 +110,17 @@ module.exports = function contentRoutes(r, { db, config }) {
   });
 
   // ---------- favourite voices ----------
-  r.add('GET', '/v1/favorites/voices', { auth: true }, async ({ user }) => ({
-    data: { voices: db.prepare('SELECT voice_id, voice_name, created_at FROM favorite_voices WHERE user_id=? ORDER BY created_at DESC').all(user.id).map((v) => ({ voiceId: v.voice_id, name: v.voice_name, createdAt: v.created_at })) },
-  }));
+  r.add('GET', '/v1/favorites/voices', { auth: true }, async ({ query, user }) => {
+    const prov = Providers.resolve(config, query.get('provider'));
+    return { data: { provider: prov.id,
+      voices: db.prepare('SELECT voice_id, voice_name, created_at FROM favorite_voices WHERE user_id=? AND provider=? ORDER BY created_at DESC').all(user.id, prov.id).map((v) => ({ voiceId: v.voice_id, name: v.voice_name, createdAt: v.created_at })) } };
+  });
   r.add('PUT', '/v1/favorites/voices/:voiceId', { auth: true }, async ({ params, body, user }) => {
     if (!ID_RE.test(params.voiceId)) throw bad('invalid_field', 'voiceId is invalid.');
+    const prov = Providers.resolve(config, body.provider);
     const name = body.name === undefined ? null : V.str(body.name, 'name', { max: 120 });
-    db.prepare('INSERT INTO favorite_voices (user_id,voice_id,voice_name,created_at) VALUES (?,?,?,?) ON CONFLICT(user_id,voice_id) DO UPDATE SET voice_name=COALESCE(excluded.voice_name, voice_name)')
-      .run(user.id, params.voiceId, name, now());
+    db.prepare('INSERT INTO favorite_voices (user_id,voice_id,voice_name,provider,created_at) VALUES (?,?,?,?,?) ON CONFLICT(user_id,voice_id) DO UPDATE SET voice_name=COALESCE(excluded.voice_name, voice_name), provider=excluded.provider')
+      .run(user.id, params.voiceId, name, prov.id, now());
     return { data: { favorite: true } };
   });
   r.add('DELETE', '/v1/favorites/voices/:voiceId', { auth: true }, async ({ params, user }) => {

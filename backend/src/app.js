@@ -20,7 +20,7 @@ function createApp(config) {
   require('./routes/content')(router, deps);
   require('./routes/admin')(router, deps);
   require('./routes/static')(router, deps);
-  router.add('GET', '/healthz', {}, async () => ({ data: { status: 'ok', providerConfigured: !!config.elevenKey } }));
+  router.add('GET', '/healthz', {}, async () => ({ data: { status: 'ok', providerConfigured: require('./providers').ALL.some((p) => p.isConfigured(config)) } }));
 
   const clientIp = (req) => (config.trustProxy && req.headers['x-forwarded-for'] ? String(req.headers['x-forwarded-for']).split(',')[0].trim() : req.socket.remoteAddress) || 'unknown';
 

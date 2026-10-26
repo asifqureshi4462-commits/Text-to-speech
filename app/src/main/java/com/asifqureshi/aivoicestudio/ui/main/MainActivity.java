@@ -31,6 +31,8 @@ public class MainActivity extends AppCompatActivity {
 
     private BottomNavigationView nav;
     private int current = TAB_HOME;
+    private String lastProvider;
+    private SharedViewModel sharedVm;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         EdgeToEdge.enable(this);
@@ -65,7 +67,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        SharedViewModel shared = new ViewModelProvider(this).get(SharedViewModel.class);
+        final SharedViewModel shared = new ViewModelProvider(this).get(SharedViewModel.class);
+        sharedVm = shared;
+        lastProvider = App.from(this).prefs.getProvider();
         shared.loadModels(false);
         shared.loadFavorites();
         shared.tabRequest.observe(this, tab -> {
@@ -97,6 +101,19 @@ public class MainActivity extends AppCompatActivity {
         }
         t.commit();
         current = index;
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        String now = App.from(this).prefs.getProvider();
+        if (!java.util.Objects.equals(now, lastProvider) && sharedVm != null) {
+            // The voice provider changed in Settings: voices, models and favourites belong to the old provider.
+            lastProvider = now;
+            sharedVm.selectedVoice.setValue(null);
+            sharedVm.loadModels(true);
+            sharedVm.loadFavorites();
+            new ViewModelProvider(this).get(com.asifqureshi.aivoicestudio.viewmodels.VoicesViewModel.class).reload();
+        }
     }
 
     @Override protected void onSaveInstanceState(Bundle outState) {

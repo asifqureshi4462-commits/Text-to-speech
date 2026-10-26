@@ -56,12 +56,19 @@ public final class ApiModels {
         public String modelId, name, description; public Integer maxCharacters;
         public boolean canUseStyle, canUseSpeakerBoost; public List<ModelLanguage> languages;
     }
-    public static class ModelsData { public List<TtsModel> models; public List<String> outputFormats; public int maxTextChars; }
+    public static class Capabilities {
+        public boolean stability, similarity, style, speakerBoost, speed;
+        public float speedMin, speedMax;
+    }
+    public static class ModelsData { public String provider; public List<TtsModel> models; public List<String> outputFormats; public Capabilities capabilities; public int maxTextChars; }
+    public static class ProviderInfo { public String id, label; public boolean configured, isDefault; public List<String> outputFormats; public Integer maxChars; }
+    public static class ProvidersData { public List<ProviderInfo> providers; public String defaultProvider; }
+    public static class FavoriteRequest { public String name, provider; public FavoriteRequest(String n, String p) { name = n; provider = p; } }
 
     // ---- speech ----
     public static class VoiceSettings { public Float stability, similarityBoost, style, speed; public Boolean useSpeakerBoost; }
     public static class TtsRequest {
-        public String text, voiceId, modelId, outputFormat, languageCode, projectId;
+        public String text, voiceId, modelId, outputFormat, languageCode, projectId, provider;
         public VoiceSettings voiceSettings;
     }
     public static class Usage {

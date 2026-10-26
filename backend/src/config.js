@@ -16,8 +16,13 @@ function load(env = process.env) {
     jwtSecret: env.JWT_SECRET || '',
     accessTtlSec: num('ACCESS_TOKEN_TTL_SECONDS', 3600),
     refreshTtlSec: num('REFRESH_TOKEN_TTL_SECONDS', 60 * 60 * 24 * 30),
+    defaultProvider: (env.TTS_PROVIDER || '').trim().toLowerCase(),
     elevenKey: env.ELEVENLABS_API_KEY || '',
     elevenBase: (env.ELEVENLABS_BASE_URL || 'https://api.elevenlabs.io').replace(/\/$/, ''),
+    openaiKey: env.OPENAI_API_KEY || '',
+    openaiBase: (env.OPENAI_BASE_URL || 'https://api.openai.com').replace(/\/$/, ''),
+    googleKey: env.GOOGLE_TTS_API_KEY || '',
+    googleBase: (env.GOOGLE_TTS_BASE_URL || 'https://texttospeech.googleapis.com').replace(/\/$/, ''),
     providerTimeoutMs: num('PROVIDER_TIMEOUT_MS', 90000),
     maxTextChars: num('MAX_TEXT_CHARS', 5000),
     planLimits,
@@ -36,6 +41,9 @@ function load(env = process.env) {
 function validate(c) {
   if (c.jwtSecret.length < 32) {
     throw new Error('JWT_SECRET must be set and at least 32 characters (e.g. `openssl rand -hex 32`).');
+  }
+  if (c.defaultProvider && !['elevenlabs', 'openai', 'google'].includes(c.defaultProvider)) {
+    throw new Error('TTS_PROVIDER must be one of: elevenlabs, openai, google.');
   }
   return c;
 }

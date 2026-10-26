@@ -12,6 +12,8 @@ import com.asifqureshi.aivoicestudio.R;
 import com.asifqureshi.aivoicestudio.audio.AudioFiles;
 import com.asifqureshi.aivoicestudio.data.Prefs;
 import com.asifqureshi.aivoicestudio.network.ApiModels.ModelsData;
+import com.asifqureshi.aivoicestudio.network.ApiModels.ProviderInfo;
+import com.asifqureshi.aivoicestudio.network.ApiModels.ProvidersData;
 import com.asifqureshi.aivoicestudio.network.ApiModels.TtsModel;
 import com.asifqureshi.aivoicestudio.network.ApiResult;
 import com.asifqureshi.aivoicestudio.ui.common.EdgeActivity;
@@ -43,6 +45,7 @@ public class SettingsActivity extends EdgeActivity {
         list = findViewById(R.id.list);
 
         row(R.string.setting_theme, this::themeLabel, this::chooseTheme);
+        row(R.string.setting_provider, this::providerLabel, this::chooseProvider);
         row(R.string.setting_default_voice, () -> app.prefs.getDefaultVoiceName() == null ? getString(R.string.none_set) : app.prefs.getDefaultVoiceName(), this::clearDefaultVoice);
         row(R.string.setting_default_model, () -> app.prefs.getDefaultModelId() == null ? getString(R.string.automatic) : app.prefs.getDefaultModelId(), this::chooseModel);
         row(R.string.setting_default_format, () -> app.prefs.getDefaultFormat(), this::chooseFormat);
@@ -72,6 +75,58 @@ public class SettingsActivity extends EdgeActivity {
     private String themeLabel() {
         int m = app.prefs.getThemeMode();
         return getString(m == Prefs.THEME_LIGHT ? R.string.theme_light : m == Prefs.THEME_DARK ? R.string.theme_dark : R.string.theme_system);
+    }
+
+    private static String labelFor(String id) {
+        if ("openai".equals(id)) return "OpenAI";
+        if ("google".equals(id)) return "Google Cloud Text-to-Speech";
+        if ("elevenlabs".equals(id)) return "ElevenLabs";
+        return id;
+    }
+
+    private String providerLabel() {
+        String p = app.prefs.getProvider();
+        return p == null ? getString(R.string.server_default) : labelFor(p);
+    }
+
+    /** Lists the providers the server says are configured; the choice is applied to voices, models and generation. */
+    private void chooseProvider() {
+        final View root = findViewById(R.id.root);
+        Background.run(() -> {
+            ApiResult<ProvidersData> r = app.voiceRepository.providers();
+            runOnUiThread(() -> {
+                if (isFinishing()) return;
+                if (!r.isSuccess()) { Ui.failure(root, r.failure, null); return; }
+                final List<String> ids = new ArrayList<>();
+                final List<String> labels = new ArrayList<>();
+                ids.add(null);
+                labels.add(getString(R.string.server_default_with, labelFor(r.data.defaultProvider)));
+                for (ProviderInfo p : r.data.providers) {
+                    if (!p.configured) continue;
+                    ids.add(p.id);
+                    labels.add(p.label);
+                }
+                if (labels.size() == 1 && !r.data.providers.isEmpty()) {
+                    boolean anyConfigured = false;
+                    for (ProviderInfo p : r.data.providers) anyConfigured |= p.configured;
+                    if (!anyConfigured) { Ui.toast(root, getString(R.string.no_provider_configured)); return; }
+                }
+                int sel = 0;
+                for (int i = 0; i < ids.size(); i++) if (java.util.Objects.equals(ids.get(i), app.prefs.getProvider())) sel = i;
+                new MaterialAlertDialogBuilder(this).setTitle(R.string.setting_provider)
+                        .setSingleChoiceItems(labels.toArray(new String[0]), sel, (d, which) -> {
+                            String chosen = ids.get(which);
+                            if (!java.util.Objects.equals(chosen, app.prefs.getProvider())) {
+                                app.prefs.setProvider(chosen);
+                                app.prefs.setDefaultVoice(null, null); // voice IDs belong to a provider
+                                app.prefs.setDefaultModelId(null);
+                            }
+                            d.dismiss();
+                            refreshAll();
+                            Ui.toast(root, getString(R.string.provider_changed));
+                        }).show();
+            });
+        });
     }
 
     private void chooseTheme() {
